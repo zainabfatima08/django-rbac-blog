@@ -29,7 +29,6 @@
                 <td class="border px-4 py-2">{{ post.author.username }}</td>
                 <td class="border px-4 py-2">{{ post.created_at|date:"Y-m-d H:i" }}</td>
                 <td class="border px-4 py-2">
-                    <!-- Read button - sab ke liye -->
                     <a href="{% url 'post_detail' post.id %}" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Read</a>
 
                     {% if request.user == post.author or request.user.is_staff %}
