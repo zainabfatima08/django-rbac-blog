@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Author List</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-10">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+
+        <h1 class="text-2xl font-bold mb-4">Pending Authors</h1>
+
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="p-3 mb-2 rounded
+                    {% if message.tags == 'success' %}bg-green-200 text-green-800{% endif %}
+                    {% if message.tags == 'error' %}bg-red-200 text-red-800{% endif %}
+                    {% if message.tags == 'warning' %}bg-yellow-200 text-yellow-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <table class="min-w-full border border-gray-200">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border px-4 py-2 text-left">Username</th>
+                    <th class="border px-4 py-2 text-left">Email</th>
+                    <th class="border px-4 py-2 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for author in authors %}
+                <tr class="hover:bg-gray-50">
+                    <td class="border px-4 py-2">{{ author.username }}</td>
+                    <td class="border px-4 py-2">{{ author.email }}</td>
+                    <td class="border px-4 py-2 text-center">
+                        {% if author.is_approved %}
+                            <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded">Already Approved</span>
+                        {% else %}
+                            <a href="{% url 'approve_list' author.id %}" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-700">
+                                Approve
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td class="border px-4 py-2 text-center" colspan="3">No pending authors</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

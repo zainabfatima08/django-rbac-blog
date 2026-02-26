@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Post</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 p-10">
+
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow text-center">
+    <h2 class="text-2xl font-bold mb-4">Delete Post</h2>
+    <p class="mb-4">Are you sure you want to delete "{{ object.title }}"?</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 mr-2">Yes, Delete</button>
+        <a href="{% url 'post_list' %}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>
