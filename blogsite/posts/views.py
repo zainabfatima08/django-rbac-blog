@@ -54,7 +54,7 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 # DELETE VIEW
 
-class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):  # order fix kiya
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = "posts/post_delete.html"
     success_url = reverse_lazy("post_list")
