@@ -35,7 +35,7 @@ class ApproveAuthorView(View):
     def get(self, request, user_id):
         if not request.user.is_staff:
             messages.error(request, "Only admin can approve authors!")
-            return redirect("home")
+            return redirect("post_list")
         
         user = get_object_or_404(User, id=user_id)
 

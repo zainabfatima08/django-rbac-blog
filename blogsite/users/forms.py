@@ -6,11 +6,12 @@ class AuthorRegistrationForm(forms.ModelForm):
         model = CustomUser
         fields =['username', 'email', 'password']
 
-        def save(self, commit = True):
-            user = super().save(commit = False)
-            user.is_author = True
-            user.is_active = False
-            if commit:
-                user.save()
-                return user
+    def save(self, commit = True):
+        user = super().save(commit = False)
+        user.set_password(self.cleaned_data['password'])
+        user.is_author = True
+        user.is_active = False
+        if commit:
+            user.save()
+            return user
             
