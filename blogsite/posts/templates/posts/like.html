@@ -1,0 +1,52 @@
+<div class="mb-4">
+    {% if request.user.is_authenticated %}
+        <button 
+            id="like-btn"
+            data-url="{% url 'like_toggle' post.slug %}"
+            data-liked="{{ user_liked|yesno:'true,false' }}"
+            class="flex items-center gap-2 px-4 py-2 rounded 
+                {% if user_liked %}bg-red-800 text-white hover:bg-red-600
+                {% else %}bg-gray-200 text-gray-700 hover:bg-red-100{% endif %}">
+            <i id="like-icon" class="{% if user_liked %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}"></i>
+            <span id="like-count">{{ like_count }}</span>
+        </button>
+
+        <script>
+            document.getElementById('like-btn').addEventListener('click', function() {
+                const btn = this;
+                const url = btn.dataset.url;
+
+                const csrfToken = document.cookie
+                    .split(';')
+                    .find(c => c.trim().startsWith('csrftoken='))
+                    .trim().split('=')[1];
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('like-count').textContent = data.like_count;
+
+                    if (data.liked) {
+                        btn.className = 'flex items-center gap-2 px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600';
+                        document.getElementById('like-icon').className = 'fa-solid fa-heart';
+                    } else {
+                        btn.className = 'flex items-center gap-2 px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-red-100';
+                        document.getElementById('like-icon').className = 'fa-regular fa-heart';
+                    }
+                });
+            });
+        </script>
+
+    {% else %}
+        <span class="flex items-center gap-2 text-gray-500 text-sm">
+            <i class="fa-solid fa-heart text-red-400"></i>
+            {{ like_count }} Likes
+        </span>
+    {% endif %}
+</div>

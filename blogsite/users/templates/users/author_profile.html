@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ author.username }} — Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 p-10">
+
+<div class="max-w-4xl mx-auto">
+
+    <div class="bg-white rounded-2xl shadow p-8 mb-6 flex items-center gap-6">
+
+        <div class="bg-indigo-100 text-indigo-600 rounded-full w-20 h-20 flex items-center justify-center text-3xl font-bold flex-shrink-0">
+            {{ author.username|first|upper }}
+        </div>
+
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-800">{{ author.username }}</h1>
+            <p class="text-gray-500 text-sm mb-3">
+                <i class="fa-solid fa-envelope mr-1"></i> {{ author.email }}
+            </p>
+            <p class="text-gray-400 text-xs">
+                <i class="fa-solid fa-calendar mr-1"></i> Joined: {{ author.date_joined|date:"Y-m-d" }}
+            </p>
+        </div>
+
+        <div class="flex gap-6 text-center flex-shrink-0">
+            <div>
+                <p class="text-2xl font-bold text-gray-800">{{ total_posts }}</p>
+                <p class="text-gray-400 text-xs">Posts</p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-red-500">{{ total_likes }}</p>
+                <p class="text-gray-400 text-xs">Likes</p>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-blue-500">{{ total_comments }}</p>
+                <p class="text-gray-400 text-xs">Comments</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            Published Posts
+            <span class="text-gray-400 text-sm font-normal ml-2">({{ total_posts }})</span>
+        </h2>
+
+        {% for post in posts %}
+        <div class="border border-gray-100 rounded-xl p-5 mb-4 hover:shadow-md transition">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ post.topic }}</h3>
+                    <p class="text-gray-500 text-sm mb-3">
+                        {{ post.article|truncatewords:20 }}
+                    </p>
+                    <div class="flex items-center gap-4 text-xs text-gray-400">
+                        <span>
+                            <i class="fa-solid fa-calendar mr-1"></i>
+                            {{ post.created_at|date:"Y-m-d" }}
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-heart text-red-400 mr-1"></i>
+                            {{ post.likes.count }} Likes
+                        </span>
+                        <span>
+                            <i class="fa-solid fa-comment text-blue-400 mr-1"></i>
+                            {{ post.comments.count }} Comments
+                        </span>
+                    </div>
+                </div>
+                <a href="{% url 'post_detail' post.slug %}"
+                   class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 flex-shrink-0 ml-4">
+                    Read
+                </a>
+            </div>
+        </div>
+
+        {% empty %}
+            <div class="text-center py-10 text-gray-400">
+                <i class="fa-solid fa-newspaper text-4xl mb-3 opacity-30"></i>
+                <p class="text-sm">No published posts yet.</p>
+            </div>
+        {% endfor %}
+
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'post_list' %}" class="text-gray-500 text-sm hover:underline">
+            ← Back to Posts
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>

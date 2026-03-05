@@ -5,39 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ post.topic }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 p-10">
 
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    
-    <h2 class="text-2xl font-bold mb-2">{{ post.topic }}</h2>
-    <p class="text-gray-500 text-sm mb-4">
-        By: <span class="font-semibold">{{ post.author.username }}</span> &nbsp;|&nbsp;
-        {{ post.created_at|date:"Y-m-d H:i" }}
-    </p>
-    
-    <hr class="mb-4">
+<div class="max-w-4xl mx-auto">
 
-    <p class="text-gray-700 text-base leading-relaxed mb-6">{{ post.article }}</p>
-    
-    <hr class="mb-4">
+    <div class="bg-white p-6 rounded shadow mb-6">
 
-    <div class="flex gap-2">
-        {% if request.user.is_staff %}
-            <a href="{% url 'post_update' post.pk %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Edit</a>
-            <a href="{% url 'post_delete' post.pk %}" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Delete</a>
-
-        {% elif request.user.is_author %}
-            {% if post.author == request.user %}
-                <a href="{% url 'post_update' post.pk %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Edit</a>
-            {% endif %}
-
-        {% else %}
-            <p class="text-blue-500 text-sm">You can only read posts.</p>
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="p-3 mb-2 rounded
+                    {% if message.tags == 'success' %}bg-green-200 text-green-800{% endif %}
+                    {% if message.tags == 'error' %}bg-red-200 text-red-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
         {% endif %}
 
-        <a href="{% url 'post_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to Posts</a>
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-2xl font-bold">{{ post.topic }}</h2>
+            {% if post.status == 'Published' %}
+                <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-semibold">Published</span>
+            {% else %}
+                <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-semibold">Draft</span>
+            {% endif %}
+        </div>
+
+        <p class="text-gray-500 text-sm mb-4">
+            By: <a href="{% url 'author_profile' post.author.username %}"
+                   class="font-semibold text-indigo-600 hover:underline">
+                    {{ post.author.username }}
+                </a> &nbsp;|&nbsp;
+            {{ post.created_at|date:"Y-m-d H:i" }}
+        </p>
+
+        <hr class="mb-4">
+        <p class="text-gray-700 text-base leading-relaxed mb-6">{{ post.article }}</p>
+        <hr class="mb-4">
+
+        <div class="flex gap-2 flex-wrap">
+            {% if request.user.is_staff %}
+                <a href="{% url 'post_update' post.slug %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Edit</a>
+                <a href="{% url 'post_delete' post.slug %}" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Delete</a>
+                {% if post.status == 'Draft' %}
+                    <form method="POST" action="{% url 'post_publish' post.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Publish</button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{% url 'post_unpublish' post.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Unpublish</button>
+                    </form>
+                {% endif %}
+
+            {% elif request.user.is_authenticated and request.user == post.author %}
+                <a href="{% url 'post_update' post.slug %}" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Edit</a>
+                {% if post.status == 'Draft' %}
+                    <form method="POST" action="{% url 'post_publish' post.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Publish</button>
+                    </form>
+                {% endif %}
+
+            {% else %}
+                <p class="text-blue-500 text-sm">You can only read posts.</p>
+            {% endif %}
+
+            <a href="{% url 'post_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Back to Posts</a>
+        </div>
     </div>
+
+    {% include "posts/like.html" %}
+    {% include "posts/comments.html" %}
 
 </div>
 
