@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 p-10">
+
+<div class="max-w-5xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <p class="text-blue-600 text-sm font-semibold uppercase tracking-wide">Author Dashboard</p>
+            <h1 class="text-3xl font-bold text-gray-800">Welcome, {{ request.user.username }}!</h1>
+        </div>
+        <a href="{% url 'post_create' %}" 
+           class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> New Post
+        </a>
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-blue-100 text-blue-600 p-3 rounded-full">
+                <i class="fa-solid fa-newspaper text-xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Total Posts</p>
+                <p class="text-3xl font-bold text-gray-800">{{ total_posts }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full">
+                <i class="fa-solid fa-file-pen text-xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Draft Posts</p>
+                <p class="text-3xl font-bold text-gray-800">{{ draft_posts }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-green-100 text-green-600 p-3 rounded-full">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Published Posts</p>
+                <p class="text-3xl font-bold text-gray-800">{{ published_posts }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6 flex items-center gap-4">
+            <div class="bg-red-100 text-red-500 p-3 rounded-full">
+                <i class="fa-solid fa-heart text-xl"></i>
+            </div>
+            <div>
+                <p class="text-gray-500 text-sm">Total Likes</p>
+                <p class="text-3xl font-bold text-gray-800">{{ total_likes }}</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Posts</h2>
+
+        <table class="min-w-full">
+            <thead>
+                <tr class="bg-gray-50 text-left text-sm text-gray-500 uppercase">
+                    <th class="px-4 py-3">Title</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Likes</th>
+                    <th class="px-4 py-3">Comments</th>
+                    <th class="px-4 py-3">Created</th>
+                    <th class="px-4 py-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for post in recent_posts %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ post.topic }}</td>
+                    <td class="px-4 py-3">
+                        {% if post.status == 'Published' %}
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Published</span>
+                        {% else %}
+                            <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">
+                        <i class="fa-solid fa-heart text-red-400 text-xs"></i>
+                        {{ post.likes.count }}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">
+                        <i class="fa-solid fa-comment text-blue-400 text-xs"></i>
+                        {{ post.comments.count }}
+                    </td>
+                    <td class="px-4 py-3 text-gray-500 text-sm">{{ post.created_at|date:"Y-m-d" }}</td>
+                    <td class="px-4 py-3 flex gap-2">
+                        <a href="{% url 'post_detail' post.slug %}" 
+                           class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Read</a>
+                        <a href="{% url 'post_update' post.slug %}" 
+                           class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">Edit</a>
+                        {% if post.status == 'Draft' %}
+                            <form method="POST" action="{% url 'post_publish' post.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                    class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">Publish</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-6 text-center text-gray-400">No posts yet. Create your first post!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="mt-4">
+            <a href="{% url 'post_list' %}" class="text-blue-500 text-sm hover:underline">
+                View all posts →
+            </a>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

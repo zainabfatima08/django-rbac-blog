@@ -1,0 +1,86 @@
+<form method="GET" action="{% url 'post_list' %}" class="mb-6 relative" id="search-form">
+    <div class="flex gap-2">
+        <div class="relative w-full">
+            <input
+                type="text"
+                name="search"
+                id="search-input"
+                value="{{ search_query }}"
+                placeholder="Search posts..."
+                autocomplete="off"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-400 text-gray-700">
+
+            <ul id="suggestions-box"
+                class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden">
+            </ul>
+        </div>
+
+        <button type="submit"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 whitespace-nowrap">
+            <i class="fa-solid fa-magnifying-glass"></i> Search
+        </button>
+
+        {% if search_query %}
+            <a href="{% url 'post_list' %}"
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 whitespace-nowrap">
+                Clear
+            </a>
+        {% endif %}
+    </div>
+</form>
+
+{% if search_query %}
+    <p class="text-gray-500 text-sm mb-4">
+        Search results for: <span class="font-semibold text-gray-700">"{{ search_query }}"</span>
+        &nbsp;—&nbsp; {{ page_obj.paginator.count }} result(s) found
+    </p>
+{% endif %}
+
+<script>
+    const searchInput = document.getElementById('search-input');
+    const suggestionsBox = document.getElementById('suggestions-box');
+    const suggestionsUrl = "{% url 'search_suggestions' %}";
+
+    searchInput.addEventListener('input', function () {
+        const query = this.value.trim();
+
+        if (query.length < 1) {
+            suggestionsBox.classList.add('hidden');
+            suggestionsBox.innerHTML = '';
+            return;
+        }
+
+        fetch(`${suggestionsUrl}?search=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                suggestionsBox.innerHTML = '';
+
+                if (data.suggestions.length === 0) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+
+                data.suggestions.forEach(post => {
+                    const li = document.createElement('li');
+                    li.textContent = post.topic;
+                    li.className = 'px-4 py-2 hover:bg-blue-50 cursor-pointer text-gray-700 text-sm';
+
+                    li.addEventListener('click', function () {
+                        searchInput.value = post.topic;
+                        suggestionsBox.classList.add('hidden');
+                        document.getElementById('search-form').submit();
+                    });
+
+                    suggestionsBox.appendChild(li);
+                });
+
+                suggestionsBox.classList.remove('hidden');
+            });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target)) {
+            suggestionsBox.classList.add('hidden');
+        }
+    });
+</script>

@@ -1,0 +1,40 @@
+<!-- Comments Section -->
+<div class="bg-white p-6 rounded shadow">
+    <h3 class="text-xl font-bold mb-4">Comments ({{ comments.count }})</h3>
+
+    {% if request.user.is_authenticated %}
+        <form method="POST" action="{% url 'comment_add' post.slug %}" class="mb-6">
+            {% csrf_token %}
+            {{ comment_form.text }}
+            <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Add Comment
+            </button>
+        </form>
+    {% else %}
+        <p class="text-gray-500 mb-6 text-sm">
+            <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Login</a> to comment.
+        </p>
+    {% endif %}
+
+    <hr class="mb-4">
+
+    {% for comment in comments %}
+    <div class="border border-gray-200 rounded p-4 mb-3">
+        <div class="flex justify-between items-start">
+            <div>
+                <span class="font-semibold text-gray-800">{{ comment.author.username }}</span>
+                <span class="text-gray-400 text-xs ml-2">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            {% if request.user.is_staff or request.user == post.author %}
+                <form method="POST" action="{% url 'comment_delete' comment.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-red-500 text-sm hover:underline">Delete</button>
+                </form>
+            {% endif %}
+        </div>
+        <p class="text-gray-700 mt-2">{{ comment.text }}</p>
+    </div>
+    {% empty %}
+        <p class="text-gray-500 text-sm">No comments yet. Be the first!</p>
+    {% endfor %}
+</div>
