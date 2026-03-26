@@ -1,7 +1,8 @@
 __pycache__/
 *.pycblogsite/.env.py
-blogsite/.env.py
+blogsite/.env
 __pycache__/
 *.pyc
 *.sqlite3
-blogsite/.env.py
+blogsite/.env
+.env
