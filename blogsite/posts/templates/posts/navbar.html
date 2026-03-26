@@ -1,0 +1,197 @@
+<nav class="bg-white shadow-sm mb-6">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+
+        <!-- Logo -->
+        <a href="{% url 'post_list' %}" class="text-indigo-600 font-bold text-lg">
+            <i class="fa-solid fa-pen-nib mr-1"></i> BlogSite
+        </a>
+
+        <div class="flex items-center gap-4">
+
+            {% if request.user.is_authenticated %}
+
+                <!-- PROFILE -->
+
+                {% if request.user.is_staff or request.user.is_author %}
+                    <a href="{% url 'author_profile' request.user.username %}"
+                       class="flex items-center gap-2 text-gray-600 hover:text-indigo-600 text-sm">
+
+                        <div class="bg-indigo-100 text-indigo-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                            {{ request.user.username|first|upper }}
+                        </div>
+
+                        {{ request.user.username }}
+                    </a>
+
+                    <!--DASHBOARD -->
+
+                    <a href="{% url 'dashboard' %}"
+                       class="flex items-center gap-1 bg-indigo-50 text-indigo-600 text-sm px-3 py-1.5 rounded-lg hover:bg-indigo-100">
+                        <i class="fa-solid fa-gauge"></i>
+                        Dashboard
+                    </a>
+                {% else %}
+                    <span class="flex items-center gap-2 text-gray-600 text-sm">
+                        <div class="bg-gray-100 text-gray-500 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                            {{ request.user.username|first|upper }}
+                        </div>
+                        {{ request.user.username }}
+                    </span>
+                {% endif %}
+
+                <!--NOTIFICATIONS -->
+
+                <div class="relative">
+
+                    <button id="notification_btn"
+                        class="relative p-2 rounded-full hover:bg-gray-100">
+
+                        <i class="fa-solid fa-bell text-gray-600 text-lg"></i>
+
+                        <span id="notification_count"
+                            class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                            {{ unread_count }}
+                        </span>
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div id="notifications_list"
+                        class="absolute right-0 mt-3 w-80 bg-white shadow-xl rounded-xl hidden border z-50">
+
+                        <!-- Header -->
+                        <div class="px-4 py-3 border-b flex justify-between">
+                            <span class="font-semibold">Notifications</span>
+                            <div class="flex gap-2 text-xs">
+                                <button onclick="markAllRead()" class="text-indigo-600">Read</button>
+                                <button onclick="clearAll()" class="text-red-500">Clear</button>
+                            </div>
+                        </div>
+
+                        <!-- List -->
+                        <ul id="notif_items" class="max-h-80 overflow-y-auto">
+                            {% for notif in notifications %}
+                                <li class="px-4 py-3 border-b flex justify-between">
+
+                                    <div onclick="markRead({{ notif.id }}, this)" class="cursor-pointer flex-1">
+                                        <p class="{% if not notif.is_read %}font-semibold{% else %}text-gray-500{% endif %}">
+                                            {{ notif.message }}
+                                        </p>
+                                        <span class="text-[10px] text-gray-400">
+                                            {{ notif.created_at|date:"H:i" }}
+                                        </span>
+                                    </div>
+
+                                    <button onclick="deleteNotif({{ notif.id }})"
+                                        class="text-red-400 text-xs ml-2">✕</button>
+
+                                </li>
+                            {% empty %}
+                                <li class="px-4 py-3 text-center text-gray-400 text-sm">
+                                    No notifications
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- LOGOUT -->
+                <form method="POST" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="bg-red-500 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-red-600">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+                    </button>
+                </form>
+
+            {% else %}
+                <a href="{% url 'account_login' %}"
+                   class="bg-indigo-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-indigo-700">
+                    <i class="fa-solid fa-right-to-bracket mr-1"></i> Login
+                </a>
+            {% endif %}
+
+        </div>
+    </div>
+</nav>
+
+<script>
+
+// WebSocket connection
+const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+const socket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/notifications/');
+
+// Receive notification
+socket.onmessage = function(e) {
+    console.log("📩 MESSAGE RECEIVED:", e.data);
+
+    const data = JSON.parse(e.data);
+    const list = document.getElementById('notif_items');
+    const count = document.getElementById('notification_count');
+
+    const item = document.createElement('li');
+    item.className = "px-4 py-3 border-b flex justify-between";
+
+    item.innerHTML = `
+        <div onclick="markRead(${data.id}, this)" class="cursor-pointer flex-1">
+            <p class="font-semibold">${data.message}</p>
+            <span class="text-[10px] text-gray-400">${data.created_at}</span>
+        </div>
+        <button onclick="deleteNotif(${data.id})" class="text-red-400 text-xs">✕</button>
+    `;
+
+    list.prepend(item);
+
+    let current = parseInt(count.textContent);
+    if (isNaN(current)) current = 0;
+    count.textContent = current + 1;
+
+    document.getElementById('notifications_list').classList.remove('hidden');
+};
+
+// Toggle dropdown
+document.getElementById('notification_btn').addEventListener('click', () => {
+    document.getElementById('notifications_list').classList.toggle('hidden');
+});
+
+// CSRF helper
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Mark read
+function markRead(id, el) {
+    fetch(`/notifications/read/${id}/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRFToken() }
+    });
+
+    el.querySelector('p').classList.remove('font-semibold');
+    el.querySelector('p').classList.add('text-gray-500');
+}
+
+// Delete
+function deleteNotif(id) {
+    fetch(`/notifications/delete/${id}/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRFToken() }
+    }).then(() => location.reload());
+}
+
+// Mark all read
+function markAllRead() {
+    fetch('/notifications/read-all/', {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRFToken() }
+    }).then(() => {
+        document.getElementById('notification_count').textContent = 0;
+    });
+}
+
+// Clear all
+function clearAll() {
+    fetch('/notifications/clear/', {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRFToken() }
+    }).then(() => location.reload());
+}
+</script>

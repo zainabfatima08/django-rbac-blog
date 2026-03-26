@@ -16,9 +16,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from users.views import PrivacyView, TermsView, DeleteDataView, SocialLogoutView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
-    path('posts/', include('posts.urls'))
+    path('posts/', include('posts.urls')),
+    path('logout/', SocialLogoutView.as_view(), name='account_logout'),
+    path('accounts/', include('allauth.urls')),
+    path('privacy/', PrivacyView.as_view(), name='privacy'),
+    path('terms/', TermsView.as_view(), name='terms'),
+    path('delete_data/', DeleteDataView.as_view(), name='delete_data'),
+
+    path('notifications/', include('notifications.urls')),
+
+
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

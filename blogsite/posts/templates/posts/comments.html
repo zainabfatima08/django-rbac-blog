@@ -1,40 +1,88 @@
-<!-- Comments Section -->
-<div class="bg-white p-6 rounded shadow">
-    <h3 class="text-xl font-bold mb-4">Comments ({{ comments.count }})</h3>
+<!-- posts/templates/posts/comments.html -->
+
+<div class="bg-white rounded-2xl shadow p-6 mt-6">
+
+    <h3 class="text-lg font-bold text-gray-800 mb-4">
+        <i class="fa-solid fa-comments text-indigo-400 mr-2"></i>
+        Comments
+        <span class="text-gray-400 text-sm font-normal ml-1">({{ comments.count }})</span>
+    </h3>
+
 
     {% if request.user.is_authenticated %}
         <form method="POST" action="{% url 'comment_add' post.slug %}" class="mb-6">
             {% csrf_token %}
-            {{ comment_form.text }}
-            <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                Add Comment
+            <textarea name="text" rows="3" placeholder="Write a comment..."
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400 resize-none mb-2"></textarea>
+            <button type="submit"
+                class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700 transition">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Post Comment
             </button>
         </form>
+
     {% else %}
-        <p class="text-gray-500 mb-6 text-sm">
-            <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Login</a> to comment.
-        </p>
+
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-center mb-6">
+            <i class="fa-solid fa-lock text-gray-300 text-3xl mb-2"></i>
+            <p class="text-gray-500 text-sm mb-3">Login to leave a comment</p>
+            <div class="flex justify-center gap-3 flex-wrap">
+                <a href="{% url 'account_login' %}?next={{ request.path }}"
+                   class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </a>
+                <a href="{% url 'account_login' %}?next={{ request.path }}"
+                   class="inline-flex items-center gap-2 border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50 transition">
+                    <i class="fa-brands fa-google"></i> Google
+                </a>
+                <a href="{% url 'account_login' %}?next={{ request.path }}"
+                   class="inline-flex items-center gap-2 border border-blue-500 text-blue-600 px-4 py-2 rounded-lg text-sm hover:bg-blue-50 transition">
+                    <i class="fa-brands fa-facebook-f"></i> Facebook
+                </a>
+                <a href="{% url 'account_login' %}?next={{ request.path }}"
+                   class="inline-flex items-center gap-2 border border-gray-800 text-gray-800 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 transition">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+        </div>
     {% endif %}
 
-    <hr class="mb-4">
-
     {% for comment in comments %}
-    <div class="border border-gray-200 rounded p-4 mb-3">
-        <div class="flex justify-between items-start">
-            <div>
-                <span class="font-semibold text-gray-800">{{ comment.author.username }}</span>
-                <span class="text-gray-400 text-xs ml-2">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+    <div class="border-b border-gray-100 py-4 last:border-0">
+        <div class="flex items-start justify-between gap-3">
+
+            <!-- Avatar + Info -->
+            <div class="flex items-start gap-3">
+                <div class="bg-indigo-100 text-indigo-600 rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {{ comment.author.username|first|upper }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">{{ comment.author.username }}</p>
+                    <p class="text-xs text-gray-400 mb-1">{{ comment.created_at|date:"Y-m-d H:i" }}</p>
+                    <p class="text-sm text-gray-700">{{ comment.text }}</p>
+                </div>
             </div>
-            {% if request.user.is_staff or request.user == post.author %}
-                <form method="POST" action="{% url 'comment_delete' comment.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="text-red-500 text-sm hover:underline">Delete</button>
-                </form>
+
+
+            {% if request.user == post.author or request.user.is_staff %}
+            <form method="POST" action="{% url 'comment_delete' comment.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                    title="Delete Comment"
+                    class="text-red-400 hover:text-red-600 text-xs flex-shrink-0 transition"
+                    onclick="return confirm('Delete this comment?')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </form>
             {% endif %}
+
         </div>
-        <p class="text-gray-700 mt-2">{{ comment.text }}</p>
     </div>
+
     {% empty %}
-        <p class="text-gray-500 text-sm">No comments yet. Be the first!</p>
+        <div class="text-center py-8 text-gray-400">
+            <i class="fa-solid fa-comment-slash text-3xl mb-2 opacity-30"></i>
+            <p class="text-sm">No comments yet. Be the first!</p>
+        </div>
     {% endfor %}
+
 </div>

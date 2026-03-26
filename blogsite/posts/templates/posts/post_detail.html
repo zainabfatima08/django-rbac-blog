@@ -11,6 +11,7 @@
 
 <div class="max-w-4xl mx-auto">
 
+
     <div class="bg-white p-6 rounded shadow mb-6">
 
         {% if messages %}
@@ -24,8 +25,7 @@
             {% endfor %}
         </div>
         {% endif %}
-
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-2">  
             <h2 class="text-2xl font-bold">{{ post.topic }}</h2>
             {% if post.status == 'Published' %}
                 <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-semibold">Published</span>

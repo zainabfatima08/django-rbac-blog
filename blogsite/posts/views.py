@@ -8,6 +8,11 @@ from django.db.models import Q
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.contrib.auth import get_user_model
+from notifications.utils import NotificationCreator
+from notifications.models import Notification
+
+User = get_user_model()
 
 def is_admin(user):
     return user.is_staff
@@ -28,7 +33,7 @@ def get_posts_for_users(user):
 
 # LIST VIEW
 
-class PostListView(View):
+class PostListView(LoginRequiredMixin, View):
     template_name = "posts/post_list.html"
 
     def get(self, request):
@@ -45,10 +50,15 @@ class PostListView(View):
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')
+
         return render(request, self.template_name, {
             'posts'        : page_obj,
             'page_obj'     : page_obj,
             'search_query' : search_query,
+            'notifications': notifications,
         })
 
 
@@ -74,7 +84,7 @@ class SearchSuggestionsView(View):
 
 # DETAIL VIEW
 
-class PostDetailView(DetailView):
+class PostDetailView(LoginRequiredMixin, DetailView):
     model = Post
     template_name = "posts/post_detail.html"
     context_object_name = "post"
@@ -109,7 +119,13 @@ class PostCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form.instance.author = self.request.user
         form.instance.status = 'Draft'
         messages.success(self.request, "Post saved as Draft!")
-        return super().form_valid(form)
+        response = super().form_valid(form)
+    
+        other_users = User.objects.exclude(id = self.request.user.id)
+        notifier = NotificationCreator()
+        notifier.post_created(other_users, self.object)
+
+        return response
 
 
 # UPDATE VIEW
@@ -183,6 +199,10 @@ class CommentCreateView(LoginRequiredMixin, View):
             comment.post = post
             comment.author = request.user
             comment.save()
+
+            notifier = NotificationCreator()
+            notifier.comment_created(post.author, post, request.user)
+
             messages.success(request, "Comment successfully added!")
         return redirect('post_detail', slug=slug)
 
@@ -197,7 +217,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
-        post_slug = comment.post.slug   # pk ki jagah slug save karo
+        post_slug = comment.post.slug
         comment.delete()
         messages.success(request, "Comment deleted successfully!")
         return redirect('post_detail', slug=post_slug)
@@ -217,6 +237,9 @@ class LikeToggleView(LoginRequiredMixin, View):
         else:
             Like.objects.create(user=request.user, post=post)
             liked = True
+
+            notifier = NotificationCreator()
+            notifier.like_created(post.author, post, request.user)
 
         return JsonResponse({
             'liked'     : liked,
@@ -249,3 +272,4 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, View):
             'total_comments' : total_comments,
             'recent_posts'   : recent_posts,
         })
+    

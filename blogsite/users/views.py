@@ -1,16 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import AuthorRegistrationForm
 from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout
 from django.views.generic import CreateView, View, ListView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.conf import settings
 from posts.models import Post, Like, Comment
+from django.views.generic import TemplateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 
-# Create your views here.
+# User model
 User = get_user_model()
 
+# -----------------------------
+# Author Registration / Approval
+# -----------------------------
 
 class AuthorRegisterView(CreateView):
     model = User
@@ -57,38 +63,62 @@ class ApproveAuthorView(View):
 
         return redirect("author_list")
 
-    
+
 class PendingAuthorsListView(ListView):
     model = User
     template_name = "users/author_list.html"
     context_object_name = "authors"
 
     def get_queryset(self): 
-        return User.objects.filter(is_approved = False, is_author = True)
-    
+        return User.objects.filter(is_approved=False, is_author=True)
+
+
+# -----------------------------
 # Author Profile View
+# -----------------------------
 
 class AuthorProfileView(View):
-
     def get(self, request, username):
-        author = get_object_or_404(User , username = username)
+        author = get_object_or_404(User, username=username)
         posts = Post.objects.filter(
-            author = author,
-            status = 'Published'
+            author=author,
+            status='Published'
         ).order_by('-created_at')
 
         total_posts = posts.count()
-        total_likes = Like.objects.filter(post__author = author).count()
-        total_comments = Comment.objects.filter(post__author = author).count()
+        total_likes = Like.objects.filter(post__author=author).count()
+        total_comments = Comment.objects.filter(post__author=author).count()
 
-        return render(request, 'users/author_profile.html',{
-            'author' :author,
-            'posts' :posts,
-            'total_posts' : total_posts,
-            'total_likes' : total_likes,
-            'total_comments' : total_comments
-
+        return render(request, 'users/author_profile.html', {
+            'author': author,
+            'posts': posts,
+            'total_posts': total_posts,
+            'total_likes': total_likes,
+            'total_comments': total_comments
         })
+
+@method_decorator(csrf_protect, name='dispatch')
+class SocialLogoutView(View):
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        request.session.flush()
+        response = redirect('/users/login/')
+        response.delete_cookie('sessionid')
+        response.delete_cookie('csrftoken')
+        return response
+
+    def get(self, request, *args, **kwargs):
+        return redirect('/users/login/')
+
+class PrivacyView(TemplateView):
+    template_name = "privacy.html"
+
+class TermsView(TemplateView):
+    template_name = "terms.html"
+
+class DeleteDataView(TemplateView):
+    template_name = "delete_data.html"
+
 
 
 
