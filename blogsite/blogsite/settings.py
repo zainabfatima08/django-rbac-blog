@@ -1,4 +1,5 @@
 from pathlib import Path
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -267,8 +268,8 @@ SOCIALACCOUNT_PROVIDERS = {
             {
                 'provider_id': 'linkedin',
                 'name': 'LinkedIn',
-                'client_id': '77xg3tbgg0pebc',
-                'secret': 'WPL_AP1.oqE4NKZNmIALPm2X.JuAH7w==',
+                'client_id': config('LINKEDIN_CLIENT_ID'),
+                'secret': config('LINKEDIN_CLIENT_SECRET'),
 
                 'settings': {
                     # 'server_url': 'https://www.linkedin.com',
